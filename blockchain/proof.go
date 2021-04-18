@@ -3,12 +3,12 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"math"
 	"math/big"
-	"strconv"
+
+	"github.com/neil-berg/blockchain/util"
 )
 
 // Difficulty is a static number here, but would be dynamically increasing in
@@ -24,31 +24,21 @@ type ProofOfWork struct {
 // CreateData returns a single slice of bytes of the POW's data consisting of the
 // block's previous hash and data, along with the current nonce and the difficulty.
 func (pow *ProofOfWork) CreateData(nonce int) []byte {
-	// nonceBytes, err := util.NumToBytes(int64(nonce))
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-	// difficultyBytes, err := util.NumToBytes(Difficulty)
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-
-	// data := bytes.Join(
-	// 	[][]byte{
-	// 		pow.Block.PrevHash,
-	// 		pow.Block.Data,
-	// 		ToHex(int64(nonce)),
-	// 		ToHex(int64(Difficulty)),
-	// 	},
-	// 	[]byte{},
-	// )
+	nonceBytes, err := util.NumToBytes(int64(nonce))
+	if err != nil {
+		log.Panic(err)
+	}
+	difficultyBytes, err := util.NumToBytes(Difficulty)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
 			pow.Block.Data,
-			[]byte(strconv.Itoa(nonce)),
-			[]byte(strconv.Itoa(Difficulty)),
+			nonceBytes,
+			difficultyBytes,
 		},
 		[]byte{},
 	)
@@ -65,7 +55,7 @@ func (pow *ProofOfWork) Run() (int, [32]byte) {
 
 	for nonce < math.MaxInt64 {
 		data := pow.CreateData(nonce)
-		hash := sha256.Sum256(data)
+		hash = sha256.Sum256(data)
 		fmt.Printf("\r%x", hash)
 		// Convert the hash to a big int
 		initHash.SetBytes(hash[:])
@@ -83,7 +73,7 @@ func (pow *ProofOfWork) Run() (int, [32]byte) {
 }
 
 // Validate takes the block's nonce, recomputes the block's hash, and confirms
-// that the hash as a big int again is less than the POW's target.
+// that the hash as a big int is less than the POW's target.
 func (pow *ProofOfWork) Validate() bool {
 	var intHash big.Int
 	data := pow.CreateData(pow.Block.Nonce)
@@ -96,18 +86,9 @@ func (pow *ProofOfWork) Validate() bool {
 func NewProof(block *Block) *ProofOfWork {
 	// Initialize the target at 1, then left shift it by the difficulty
 	target := big.NewInt(1)
-	// 256 is the number of bytes in the block's hash (sha256). As difficulty
+	// 256 is the number of bits in the block's hash (sha256). As difficulty
 	// increases, the target value decreases, making it harder to complete the proof.
 	target.Lsh(target, uint(256-Difficulty))
 	pow := &ProofOfWork{block, target}
 	return pow
-}
-
-func ToHex(num int64) []byte {
-	buff := new(bytes.Buffer)
-	err := binary.Write(buff, binary.BigEndian, num)
-	if err != nil {
-		log.Panic()
-	}
-	return buff.Bytes()
 }

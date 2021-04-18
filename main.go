@@ -20,6 +20,6 @@ func main() {
 		fmt.Printf("Nonce: \t\t %d\n", block.Nonce)
 
 		pow := blockchain.NewProof(block)
-		fmt.Printf("PoW:\t\t %v\n", pow.Validate())
+		fmt.Printf("Valid:\t\t %v\n", pow.Validate())
 	}
 }

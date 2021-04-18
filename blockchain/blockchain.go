@@ -16,16 +16,6 @@ type Blockchain struct {
 // CreateBlock creates a new block given its data and previous block's hash
 func CreateBlock(data string, prevHash []byte) *Block {
 	block := &Block{[]byte(data), []byte{}, prevHash, 0}
-
-	// d := bytes.Join(
-	// 	[][]byte{
-	// 		block.PrevHash,
-	// 		block.Data,
-	// 	},
-	// 	[]byte{},
-	// )
-	// var hash [32]byte
-	// hash = sha256.Sum256([]byte(d))
 	pow := NewProof(block)
 	nonce, hash := pow.Run()
 	block.Hash = hash[:]
