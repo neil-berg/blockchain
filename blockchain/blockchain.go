@@ -1,11 +1,16 @@
 package blockchain
 
+import (
+	"time"
+)
+
 // Block shape
 type Block struct {
-	Data     []byte
-	Hash     []byte
-	PrevHash []byte
-	Nonce    int
+	Data      []byte
+	Hash      []byte
+	PrevHash  []byte
+	Nonce     int
+	Timestamp time.Time
 }
 
 // Blockchain shape
@@ -15,7 +20,7 @@ type Blockchain struct {
 
 // CreateBlock creates a new block given its data and previous block's hash
 func CreateBlock(data string, prevHash []byte) *Block {
-	block := &Block{[]byte(data), []byte{}, prevHash, 0}
+	block := &Block{[]byte(data), []byte{}, prevHash, 0, time.Now()}
 	pow := NewProof(block)
 	nonce, hash := pow.Run()
 	block.Hash = hash[:]

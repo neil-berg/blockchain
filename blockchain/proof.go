@@ -32,6 +32,10 @@ func (pow *ProofOfWork) CreateData(nonce int) []byte {
 	if err != nil {
 		log.Panic(err)
 	}
+	timestampBytes, err := util.NumToBytes(pow.Block.Timestamp.Unix())
+	if err != nil {
+		log.Panic(err)
+	}
 
 	data := bytes.Join(
 		[][]byte{
@@ -39,6 +43,7 @@ func (pow *ProofOfWork) CreateData(nonce int) []byte {
 			pow.Block.Data,
 			nonceBytes,
 			difficultyBytes,
+			timestampBytes,
 		},
 		[]byte{},
 	)
