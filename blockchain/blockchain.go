@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -18,11 +19,13 @@ type Blockchain struct {
 	Blocks []*Block
 }
 
-// CreateBlock creates a new block given its data and previous block's hash
+// CreateBlock performs the block's proof-of-work, populating the block with a
+// hash and nonce that can validated before attaching to the chain.
 func CreateBlock(data string, prevHash []byte) *Block {
 	block := &Block{[]byte(data), []byte{}, prevHash, 0, time.Now()}
 	pow := NewProof(block)
 	nonce, hash := pow.Run()
+	fmt.Printf("Completed proof-of-work: \n \tNonce: \t%d\n \tHash: \t%x\n", nonce, hash)
 	block.Hash = hash[:]
 	block.Nonce = nonce
 	return block

@@ -3,7 +3,6 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"fmt"
 	"log"
 	"math"
 	"math/big"
@@ -11,8 +10,8 @@ import (
 	"github.com/neil-berg/blockchain/util"
 )
 
-// Difficulty is a static number here, but would be dynamically increasing in
-// reality to account for increased miners and computational power over time
+// Difficulty is a static number here, but would be dynamically changing in
+// reality to regulate block rates.
 const Difficulty = 12
 
 // ProofOfWork is the shape of a block's proof of work
@@ -61,10 +60,9 @@ func (pow *ProofOfWork) Run() (int, [32]byte) {
 	for nonce < math.MaxInt64 {
 		data := pow.CreateData(nonce)
 		hash = sha256.Sum256(data)
-		fmt.Printf("\r%x", hash)
 		// Convert the hash to a big int
 		initHash.SetBytes(hash[:])
-		// Compare the big int hash to the target big int hash:
+		// Compare the big int hash to the target big int hash
 		if initHash.Cmp(pow.Target) == -1 {
 			// Computed hash is less than the target hash, so we signed the block
 			break
@@ -73,7 +71,6 @@ func (pow *ProofOfWork) Run() (int, [32]byte) {
 			nonce++
 		}
 	}
-	fmt.Println()
 	return nonce, hash
 }
 
