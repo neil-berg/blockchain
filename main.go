@@ -2,11 +2,26 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/neil-berg/blockchain/blockchain"
+	"github.com/neil-berg/blockchain/database"
 )
 
 func main() {
+	db := database.Open()
+	defer db.Close()
+
+	key := []byte("foo")
+	value := []byte("barwww")
+	err := database.Write(db, key, value)
+	v, err := database.Read(db, key)
+	fmt.Println("the value is......", v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return
 	chain := blockchain.Init()
 	chain.AddBlock("First block")
 	chain.AddBlock("Second block")
