@@ -11,6 +11,37 @@ import (
 // For now, we use a single bucket storing all (unique) keys and values
 const bucket = "bucket001"
 
+// Database embeds the original DB struct from NutsDB to utilize their methods and
+// add custom ones on the same struct
+type Database struct {
+	*nutsdb.DB
+}
+
+func (db *Database) Read(key []byte) (string, error) {
+	var value string
+	err := db.View(
+		func(tx *nutsdb.Tx) error {
+			result, err := tx.Get(bucket, key)
+			if err != nil {
+				return err
+			}
+			value = string(result.Value)
+			return nil
+		})
+	return value, err
+}
+
+func (db *Database) Write(key, value []byte) error {
+	return db.Update(
+		func(tx *nutsdb.Tx) error {
+			err := tx.Put(bucket, key, value, 0)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+}
+
 func createDatabaseDirectory() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -31,8 +62,8 @@ func createDatabaseDirectory() (string, error) {
 }
 
 // Open is a wrapper around nutsDB.Open(), which opens and returns a new
-// database instance.
-func Open() *nutsdb.DB {
+// custom database instance, embedding the nutsDB database struct.
+func Open() *Database {
 	dir, err := createDatabaseDirectory()
 	if err != nil {
 		log.Fatal(err)
@@ -43,33 +74,5 @@ func Open() *nutsdb.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return db
-}
-
-// Write is a wrapper around nutsDB.Update(), which takes a key, and value and
-// then writes to disk.
-func Write(db *nutsdb.DB, key, value []byte) error {
-	return db.Update(
-		func(tx *nutsdb.Tx) error {
-			err := tx.Put(bucket, key, value, 0)
-			if err != nil {
-				return err
-			}
-			return nil
-		})
-}
-
-// Read in a wrapper around nutsDB.View(), which takes a key and returns its value.
-func Read(db *nutsdb.DB, key []byte) (string, error) {
-	var value string
-	err := db.View(
-		func(tx *nutsdb.Tx) error {
-			result, err := tx.Get(bucket, key)
-			if err != nil {
-				return err
-			}
-			value = string(result.Value)
-			return nil
-		})
-	return value, err
+	return &Database{db}
 }

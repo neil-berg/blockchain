@@ -12,10 +12,10 @@ func main() {
 	db := database.Open()
 	defer db.Close()
 
-	key := []byte("foo")
-	value := []byte("barwww")
-	err := database.Write(db, key, value)
-	v, err := database.Read(db, key)
+	key := []byte("some-key")
+	value := []byte("this-value-for-some-key!!")
+	err := db.Write(key, value)
+	v, err := db.Read(key)
 	fmt.Println("the value is......", v)
 	if err != nil {
 		log.Fatal(err)
