@@ -13,7 +13,7 @@ func main() {
 	defer db.Close()
 
 	key := []byte("some-key")
-	value := []byte("this-value-for-some-key!!")
+	value := []byte("this-value-for-some-key!!!!")
 	err := db.Write(key, value)
 	v, err := db.Read(key)
 	fmt.Println("the value is......", v)
