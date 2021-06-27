@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"time"
 )
@@ -36,6 +38,28 @@ func (chain *Blockchain) AddBlock(data string) {
 	prevBlock := chain.Blocks[len(chain.Blocks)-1]
 	block := CreateBlock(data, prevBlock.Hash)
 	chain.Blocks = append(chain.Blocks, block)
+}
+
+// Serialize encodes a block into a gob
+func (block *Block) Serialize() ([]byte, error) {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(block)
+	if err != nil {
+		return []byte{}, err
+	}
+	return result.Bytes(), nil
+}
+
+// Deserialize deserializes a slice of encoded gob bytes into a Block
+func Deserialize(data []byte) (*Block, error) {
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&block)
+	if err != nil {
+		return &Block{}, err
+	}
+	return &block, nil
 }
 
 // Genesis returns the first block of the blockchain
