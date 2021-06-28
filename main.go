@@ -2,25 +2,16 @@ package main
 
 import (
 	"github.com/neil-berg/blockchain/blockchain"
+	"github.com/neil-berg/blockchain/database"
 )
 
 func main() {
-	// db := database.Open()
-	// defer db.Close()
+	db := database.Open()
+	defer db.Close()
 
-	// key := []byte("some-key")
-	// value := []byte("this-value-for-some-key2")
-	// err := db.Write(database.BlocksBucket, key, value)
-	// v, err := db.Read(database.BlocksBucket, key)
-	// fmt.Println("the value is......", v)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	chain := blockchain.Init()
-
+	chain := blockchain.Init(db)
 	chain.AddBlock("First block")
-	// chain.AddBlock("Second block")
+	chain.AddBlock("Second block")
 	// chain.AddBlock("Third block")
 
 	// for i, block := range chain.Blocks {
@@ -34,4 +25,5 @@ func main() {
 	// 	pow := blockchain.NewProof(block)
 	// 	fmt.Printf("Valid:\t\t %v\n", pow.Validate())
 	// }
+
 }

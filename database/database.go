@@ -22,21 +22,18 @@ type Database struct {
 }
 
 // EmptyBucket checks if a given bucket is empty (no entries)
-func (db *Database) EmptyBucket(bucket string) (bool, error) {
-	var isEmpty bool
-
+func (db *Database) EmptyBucket(bucket string) bool {
 	err := db.View(
 		func(tx *nutsdb.Tx) error {
 			// Returns an err if bucket is empty
 			_, err := tx.GetAll(bucket)
 			if err != nil {
-				isEmpty = true
 				return err
 			}
 			return nil
 		})
 
-	return isEmpty, err
+	return err != nil
 }
 
 // Read from one key in specified bucket

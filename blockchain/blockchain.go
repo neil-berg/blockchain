@@ -93,34 +93,33 @@ func Genesis() *Block {
 }
 
 // Init initializes a new blockchain
-func Init() *Blockchain {
-	db := database.Open()
-
+func Init(db *database.Database) *Blockchain {
 	var tip []byte
-	key := []byte(database.TipKey)
+	tipKey := []byte(database.TipKey)
 
-	blocksBucketEmpty, err := db.EmptyBucket(database.BlocksBucket)
-	if err != nil {
-		// Not fatal, just note that the bucket is empty
-		fmt.Println(err)
-	}
+	emtpyBlocksBucket := db.EmptyBucket(database.BlocksBucket)
 
-	if blocksBucketEmpty {
+	if emtpyBlocksBucket {
 		// Create and store the genesis block and it's hash as the new chain's tip
 		genesis := Genesis()
 		fmt.Println("creating genesis block")
 		serializedBlock, err := genesis.Serialize()
 		err = db.Write(database.BlocksBucket, genesis.Hash, serializedBlock)
 		fmt.Println("storing genisis")
-		err = db.Write(database.BlocksBucket, key, genesis.Hash)
+		err = db.Write(database.BlocksBucket, tipKey, genesis.Hash)
 		fmt.Println("storing tip")
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		// Blockchain exists, just read the tip
-		tip, err = db.Read(database.BlocksBucket, key)
 		fmt.Println("reading tip")
+		// Blockchain exists, just read the tip
+		lastHash, err := db.Read(database.BlocksBucket, tipKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tip = lastHash
+		fmt.Printf("Tip: %x\n", tip)
 	}
 
 	return &Blockchain{tip, db}
