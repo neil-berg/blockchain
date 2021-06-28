@@ -8,8 +8,12 @@ import (
 	"github.com/xujiajun/nutsdb"
 )
 
-// For now, we use a single bucket storing all (unique) keys and values
-const bucket = "bucket001"
+const (
+	// BlocksBucket is the bucket to store blocks
+	BlocksBucket = "blocksBucket"
+	// TipKey is the key used to store the hash of the last block in the chain (its tip)
+	TipKey = "l"
+)
 
 // Database embeds the original DB struct from NutsDB to utilize their methods and
 // add custom ones on the same struct
@@ -17,21 +21,41 @@ type Database struct {
 	*nutsdb.DB
 }
 
-func (db *Database) Read(key []byte) (string, error) {
-	var value string
+// EmptyBucket checks if a given bucket is empty (no entries)
+func (db *Database) EmptyBucket(bucket string) (bool, error) {
+	var isEmpty bool
+
+	err := db.View(
+		func(tx *nutsdb.Tx) error {
+			// Returns an err if bucket is empty
+			_, err := tx.GetAll(bucket)
+			if err != nil {
+				isEmpty = true
+				return err
+			}
+			return nil
+		})
+
+	return isEmpty, err
+}
+
+// Read from one key in specified bucket
+func (db *Database) Read(bucket string, key []byte) ([]byte, error) {
+	var value []byte
 	err := db.View(
 		func(tx *nutsdb.Tx) error {
 			result, err := tx.Get(bucket, key)
 			if err != nil {
 				return err
 			}
-			value = string(result.Value)
+			value = result.Value
 			return nil
 		})
 	return value, err
 }
 
-func (db *Database) Write(key, value []byte) error {
+// Write one key/value pair to a specified bucket
+func (db *Database) Write(bucket string, key, value []byte) error {
 	return db.Update(
 		func(tx *nutsdb.Tx) error {
 			err := tx.Put(bucket, key, value, 0)

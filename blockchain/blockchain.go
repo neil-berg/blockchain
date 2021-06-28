@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"log"
 	"time"
+
+	"github.com/neil-berg/blockchain/database"
 )
 
 // Block shape
@@ -18,7 +21,10 @@ type Block struct {
 
 // Blockchain shape
 type Blockchain struct {
-	Blocks []*Block
+	// The blockchain's tip is the last block hash stored in the DB
+	tip []byte
+	// Instance of our DB
+	db *database.Database
 }
 
 // CreateBlock performs the block's proof-of-work, populating the block with a
@@ -34,10 +40,29 @@ func CreateBlock(data string, prevHash []byte) *Block {
 }
 
 // AddBlock adds a new block to the blockchain
-func (chain *Blockchain) AddBlock(data string) {
-	prevBlock := chain.Blocks[len(chain.Blocks)-1]
-	block := CreateBlock(data, prevBlock.Hash)
-	chain.Blocks = append(chain.Blocks, block)
+func (chain *Blockchain) AddBlock(data string) error {
+	tipKey := []byte(database.TipKey)
+
+	tip, err := chain.db.Read(database.BlocksBucket, tipKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	block := CreateBlock(data, tip)
+	serializedBlock, err := block.Serialize()
+	err = chain.db.Write(database.BlocksBucket, block.Hash, serializedBlock)
+	err = chain.db.Write(database.BlocksBucket, tipKey, block.Hash)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("============= ADDED BLOCK ===============")
+	fmt.Printf("Timestamp:\t %v\n", block.Timestamp)
+	fmt.Printf("Data:\t\t %s\n", block.Data)
+	fmt.Printf("Hash:\t\t %x\n", block.Hash)
+	fmt.Printf("Previous hash:\t %x\n", block.PrevHash)
+	fmt.Printf("Nonce: \t\t %d\n", block.Nonce)
+	return nil
 }
 
 // Serialize encodes a block into a gob
@@ -69,7 +94,34 @@ func Genesis() *Block {
 
 // Init initializes a new blockchain
 func Init() *Blockchain {
-	genesis := Genesis()
-	blockchain := &Blockchain{[]*Block{genesis}}
-	return blockchain
+	db := database.Open()
+
+	var tip []byte
+	key := []byte(database.TipKey)
+
+	blocksBucketEmpty, err := db.EmptyBucket(database.BlocksBucket)
+	if err != nil {
+		// Not fatal, just note that the bucket is empty
+		fmt.Println(err)
+	}
+
+	if blocksBucketEmpty {
+		// Create and store the genesis block and it's hash as the new chain's tip
+		genesis := Genesis()
+		fmt.Println("creating genesis block")
+		serializedBlock, err := genesis.Serialize()
+		err = db.Write(database.BlocksBucket, genesis.Hash, serializedBlock)
+		fmt.Println("storing genisis")
+		err = db.Write(database.BlocksBucket, key, genesis.Hash)
+		fmt.Println("storing tip")
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		// Blockchain exists, just read the tip
+		tip, err = db.Read(database.BlocksBucket, key)
+		fmt.Println("reading tip")
+	}
+
+	return &Blockchain{tip, db}
 }
