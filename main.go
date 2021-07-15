@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/neil-berg/blockchain/blockchain"
+	commandline "github.com/neil-berg/blockchain/cli"
 	"github.com/neil-berg/blockchain/database"
 )
 
@@ -10,8 +11,11 @@ func main() {
 	defer db.Close()
 
 	chain := blockchain.Init(db)
-	chain.AddBlock("First block")
-	chain.AddBlock("Second block")
+	cli := commandline.CLI{Chain: chain}
+	cli.Run()
+
+	// chain.AddBlock("First block")
+	// chain.AddBlock("Second block")
 	// chain.AddBlock("Third block")
 
 	// for i, block := range chain.Blocks {

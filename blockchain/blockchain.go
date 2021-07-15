@@ -27,6 +27,12 @@ type Blockchain struct {
 	db *database.Database
 }
 
+// Iterator shape
+type Iterator struct {
+	currentHash []byte
+	db          *database.Database
+}
+
 // CreateBlock performs the block's proof-of-work, populating the block with a
 // hash and nonce that can validated before attaching to the chain.
 func CreateBlock(data string, prevHash []byte) *Block {
@@ -63,6 +69,30 @@ func (chain *Blockchain) AddBlock(data string) error {
 	fmt.Printf("Previous hash:\t %x\n", block.PrevHash)
 	fmt.Printf("Nonce: \t\t %d\n", block.Nonce)
 	return nil
+}
+
+// GetNewIterator returns a new blockchain iterator
+func (chain *Blockchain) GetNewIterator() *Iterator {
+	return &Iterator{chain.tip, chain.db}
+}
+
+// Next returns the next block in a blockchain iterator
+func (iterator *Iterator) Next() *Block {
+	var block *Block
+
+	data, err := iterator.db.Read(database.BlocksBucket, iterator.currentHash)
+	if err != nil {
+		fmt.Println("Failed to get next block")
+	}
+
+	block, err = Deserialize(data)
+	if err != nil {
+		fmt.Println("Failed to deserialize the block")
+	}
+
+	iterator.currentHash = block.PrevHash
+
+	return block
 }
 
 // Serialize encodes a block into a gob
