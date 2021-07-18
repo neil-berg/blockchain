@@ -14,7 +14,7 @@ type CLI struct {
 }
 
 func (cli *CLI) printUsage() {
-	fmt.Println("Error parsing commands. CLI usage:")
+	fmt.Println("Error parsing CLI commands. \nCLI usage:")
 	fmt.Println("\taddblock --data <some data>")
 	fmt.Println("\tprintchain")
 }
@@ -26,6 +26,11 @@ func (cli *CLI) Run() {
 
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 
+	if len(os.Args) == 1 {
+		cli.printUsage()
+		return
+	}
+
 	switch os.Args[1] {
 	case "addblock":
 		addBlockCmd.Parse(os.Args[2:])
@@ -33,7 +38,7 @@ func (cli *CLI) Run() {
 		printChainCmd.Parse(os.Args[2:])
 	default:
 		cli.printUsage()
-		os.Exit(1)
+		// os.Exit(1)
 	}
 
 	if addBlockCmd.Parsed() {
